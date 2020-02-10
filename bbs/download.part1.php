@@ -51,7 +51,9 @@ if(empty($state)) {
 
     // check download limits
     list($download_level, $download_limits, $download_hours) = explode(",", $board['bo_9']);
-    if(($download_limits * $download_hours) > 0) {
+    if($download_level > 0) {
+        alert_close("다운로드 권한이 없습니다.");
+    } elseif(($download_limits * $download_hours) > 0) {
         $tmp_row = sql_fetch("
             select count(*) as cnt from {$g5['memo_table']}
                where me_memo = '$ipaddress'
