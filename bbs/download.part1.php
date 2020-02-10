@@ -1,8 +1,8 @@
 <?php
 include_once(G5_CAPTCHA_PATH.'/captcha.lib.php');
 
-// get captcha key
-$captcha_key = $_POST['captcha_key'];
+// get state
+$state = $_POST['state'];
 
 // if captcha key is empty
 if(empty($captcha_key)) {
@@ -49,19 +49,32 @@ if(empty($captcha_key)) {
     else
         $ipaddress = 'UNKNOWN';
 
-    // check download limits    
-    $download_limits = (int)$board['bo_9'];
-    $tmp_row = sql_fetch("select count(*) as cnt from {$g5['memo_table']} where me_memo = '$ipaddress' and me_recv_mb_id = '@download' and me_send_datetime > (now() - interval 24 hour)");
-    $download_currents = $tmp_row['cnt'];
-    if($download_currents >= $download_limits) {
-        alert_close("비회원 일일(24시간) 내려받기 횟수를 초과하였습니다.");
+    // check download limits
+    list($download_level, $download_limits, $download_hours) = explode(",", $board['bo_9']);
+    if(($download_limits * $download_hours) > 0) {
+        $tmp_row = sql_fetch("
+            select count(*) as cnt from {$g5['memo_table']}
+               where me_memo = '$ipaddress'
+                   and me_recv_mb_id = '@download'
+                   and me_send_datetime > (now() - interval " . ($download_hours > 1 ? "$download_hours hours" : "1 hour") . ")
+        ");
+        $download_currents = $tmp_row['cnt'];
+        if($download_currents >= $download_limits) {
+            alert_close("비회원 내려받기 횟수를 초과하였습니다. (" . $download_limits . "회/" . $download_hours . "시간)");
+        }
+
+        // add download history
+        $tmp_row = sql_fetch(" select max(me_id) as max_me_id from {$g5['memo_table']} ");
+        $me_id = $tmp_row['max_me_id'] + 1;
+        $me_memo = $ipaddress;
+        $sql = "insert into {$g5['memo_table']} ( me_id, me_recv_mb_id, me_send_mb_id, me_send_datetime, me_read_datetime, me_memo ) values ($me_id, '@download', 'admin', '" . G5_TIME_YMDHIS . "', '" . G5_TIME_YMDHIS . "', '$me_memo')";
+        sql_query($sql);
     }
-
-    // add download history
-    $tmp_row = sql_fetch(" select max(me_id) as max_me_id from {$g5['memo_table']} ");
-    $me_id = $tmp_row['max_me_id'] + 1;
-    $me_memo = $ipaddress;
-    $sql = "insert into {$g5['memo_table']} ( me_id, me_recv_mb_id, me_send_mb_id, me_send_datetime, me_read_datetime, me_memo ) values ($me_id, '@download', 'admin', '" . G5_TIME_YMDHIS . "', '" . G5_TIME_YMDHIS . "', '$me_memo')";
-    sql_query($sql);
+} else {
+    list($download_level, $download_limits, $download_hours) = explode(",", $board['bo_9']);
+    if($download_level > 0) {
+        if($download_level > $member['mb_level']) {
+            alert_close("다운로드 권한이 없습니다.");
+        }
+    }
 }
-
