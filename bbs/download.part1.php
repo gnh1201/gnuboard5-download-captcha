@@ -5,7 +5,7 @@ include_once(G5_CAPTCHA_PATH.'/captcha.lib.php');
 $state = $_POST['state'];
 
 // if captcha key is empty
-if(empty($captcha_key)) {
+if(empty($state)) {
     // Page ID
     $pid = ($pid) ? $pid : '';
     $at = apms_page_thema($pid);
