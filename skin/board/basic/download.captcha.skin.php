@@ -11,6 +11,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$skin_url.'/style.css" media="scr
             <input type="hidden" name="bo_table" value="<?php echo $bo_table; ?>">
             <input type="hidden" name="wr_id" value="<?php echo $wr_id; ?>">
             <input type="hidden" name="no" value="<?php echo $no; ?>">
+            <input type="hidden" name="state" value="1">
         </div>
 
         <div class="panel panel-default">
